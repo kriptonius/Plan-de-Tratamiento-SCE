@@ -1,253 +1,123 @@
-const $ = id => document.getElementById(id);
+/* ---------------------------------------------------------
+   Catálogo CIE-10 (OMS) — Capítulo XI, rango K00-K14
+   Enfermedades de la cavidad bucal, glándulas salivales y maxilares
+--------------------------------------------------------- */
+const CIE10 = [
+  { code: "K00.0", label: "Anodoncia", tags: "ausencia congenita dientes hipodoncia oligodoncia" },
+  { code: "K00.1", label: "Dientes supernumerarios", tags: "diente extra mesiodens" },
+  { code: "K00.2", label: "Anomalías del tamaño y forma de los dientes", tags: "macrodoncia microdoncia fusion geminacion" },
+  { code: "K00.3", label: "Dientes moteados", tags: "fluorosis manchas esmalte" },
+  { code: "K00.4", label: "Alteraciones de la formación dentaria", tags: "hipoplasia esmalte" },
+  { code: "K00.6", label: "Alteraciones de la erupción dentaria", tags: "retraso erupcion" },
+  { code: "K00.7", label: "Síndrome de la erupción dentaria", tags: "molestias erupcion bebe" },
+  { code: "K00.9", label: "Trastorno del desarrollo dentario, no especificado", tags: "" },
 
-$("date").value = new Date().toISOString().slice(0, 10);
+  { code: "K01.0", label: "Dientes incluidos", tags: "diente no erupcionado" },
+  { code: "K01.1", label: "Dientes impactados", tags: "muela del juicio cordal retenida tercer molar impactado" },
 
-function esc(text) {
-  return String(text || "").replace(/[&<>"']/g, c => ({
-    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;"
-  }[c]));
+  { code: "K02.0", label: "Caries limitada al esmalte", tags: "caries incipiente mancha blanca" },
+  { code: "K02.1", label: "Caries de la dentina", tags: "caries profunda" },
+  { code: "K02.2", label: "Caries del cemento", tags: "caries radicular cuello" },
+  { code: "K02.3", label: "Caries dental detenida", tags: "caries inactiva paralizada" },
+  { code: "K02.4", label: "Odontoclasia", tags: "caries infantil severa" },
+  { code: "K02.8", label: "Otras caries dentales", tags: "" },
+  { code: "K02.9", label: "Caries dental, no especificada", tags: "caries" },
+
+  { code: "K03.0", label: "Atrición excesiva", tags: "desgaste dental bruxismo" },
+  { code: "K03.1", label: "Abrasión dentaria", tags: "desgaste cepillado" },
+  { code: "K03.2", label: "Erosión dentaria", tags: "desgaste acido" },
+  { code: "K03.3", label: "Reabsorción patológica de dientes", tags: "" },
+  { code: "K03.4", label: "Hipercementosis", tags: "" },
+  { code: "K03.5", label: "Anquilosis dentaria", tags: "diente anquilosado sumergido" },
+  { code: "K03.6", label: "Depósitos [acreciones] sobre los dientes", tags: "sarro calculo placa tartaro" },
+  { code: "K03.7", label: "Cambios de color post-eruptivos de tejidos duros", tags: "manchas dientes pigmentacion" },
+  { code: "K03.9", label: "Enfermedad de tejidos duros de dientes, no especificada", tags: "" },
+
+  { code: "K04.0", label: "Pulpitis", tags: "dolor pulpar nervio inflamado" },
+  { code: "K04.1", label: "Necrosis de la pulpa", tags: "diente muerto necrosis pulpar" },
+  { code: "K04.2", label: "Degeneración de la pulpa", tags: "calcificacion pulpar" },
+  { code: "K04.3", label: "Formación anormal de tejido duro en la pulpa", tags: "" },
+  { code: "K04.4", label: "Periodontitis apical aguda de origen pulpar", tags: "dolor al morder infeccion apical aguda" },
+  { code: "K04.5", label: "Periodontitis apical crónica", tags: "granuloma periapical" },
+  { code: "K04.6", label: "Absceso periapical con fístula", tags: "absceso paperita fogata" },
+  { code: "K04.7", label: "Absceso periapical sin fístula", tags: "absceso dental inflamacion" },
+  { code: "K04.8", label: "Quiste radicular", tags: "quiste periapical" },
+  { code: "K04.9", label: "Otras enfermedades de la pulpa y tejidos periapicales", tags: "" },
+
+  { code: "K05.0", label: "Gingivitis aguda", tags: "encias sangrantes inflamadas" },
+  { code: "K05.1", label: "Gingivitis crónica", tags: "encias inflamadas cronica" },
+  { code: "K05.2", label: "Periodontitis aguda", tags: "enfermedad periodontal aguda" },
+  { code: "K05.3", label: "Periodontitis crónica", tags: "piorrea perdida de hueso encias" },
+  { code: "K05.4", label: "Periodontosis", tags: "" },
+  { code: "K05.5", label: "Otras enfermedades periodontales", tags: "" },
+  { code: "K05.6", label: "Enfermedad periodontal, no especificada", tags: "" },
+
+  { code: "K06.0", label: "Retracción gingival", tags: "recesion encia diente largo" },
+  { code: "K06.1", label: "Hiperplasia gingival", tags: "crecimiento encia agrandamiento" },
+  { code: "K06.2", label: "Lesiones de la encía asociadas con traumatismo", tags: "trauma encia" },
+  { code: "K06.9", label: "Trastorno de la encía, no especificado", tags: "" },
+
+  { code: "K07.0", label: "Anomalías importantes del tamaño de los maxilares", tags: "prognatismo retrognatismo" },
+  { code: "K07.1", label: "Anomalías de la relación maxilobasilar", tags: "" },
+  { code: "K07.2", label: "Anomalías de la relación entre arcadas dentarias", tags: "mordida cruzada abierta" },
+  { code: "K07.3", label: "Anomalías de la posición del diente", tags: "apiñamiento diastema diente girado" },
+  { code: "K07.4", label: "Maloclusión, no especificada", tags: "mala mordida" },
+  { code: "K07.6", label: "Trastornos de la articulación temporomandibular", tags: "atm dolor mandibula chasquido" },
+  { code: "K07.9", label: "Anomalía dentofacial, no especificada", tags: "" },
+
+  { code: "K08.1", label: "Pérdida de dientes por accidente, extracción o enf. periodontal", tags: "diente perdido edentulo" },
+  { code: "K08.2", label: "Atrofia del reborde alveolar edéntulo", tags: "reabsorcion hueso" },
+  { code: "K08.3", label: "Raíz dentaria retenida", tags: "resto radicular" },
+  { code: "K08.8", label: "Otros trastornos de dientes y estructuras de sostén", tags: "diente flojo movilidad dental" },
+  { code: "K08.9", label: "Trastorno de dientes y estructuras de sostén, no especificado", tags: "" },
+
+  { code: "K09.0", label: "Quistes odontogénicos del desarrollo", tags: "quiste dentigero" },
+  { code: "K09.1", label: "Quistes de fisura del desarrollo (no odontogénico)", tags: "" },
+  { code: "K09.9", label: "Quiste de la región bucal, no especificado", tags: "" },
+
+  { code: "K10.2", label: "Enfermedades inflamatorias de los maxilares", tags: "osteomielitis maxilar" },
+  { code: "K10.3", label: "Alveolitis de los maxilares", tags: "alveolitis seca postextraccion" },
+  { code: "K10.9", label: "Enfermedad de los maxilares, no especificada", tags: "" },
+
+  { code: "K11.2", label: "Sialoadenitis", tags: "inflamacion glandula salival" },
+  { code: "K11.5", label: "Sialolitiasis", tags: "calculo salival piedra" },
+  { code: "K11.6", label: "Mucocele de la glándula salival", tags: "mucocele ranula" },
+  { code: "K11.7", label: "Trastornos de la secreción salival", tags: "boca seca xerostomia sialorrea" },
+
+  { code: "K12.0", label: "Aftas bucales recurrentes", tags: "afta llaga boca ulcera" },
+  { code: "K12.1", label: "Otras formas de estomatitis", tags: "estomatitis inflamacion boca" },
+  { code: "K12.2", label: "Celulitis y absceso de la boca", tags: "" },
+
+  { code: "K13.0", label: "Enfermedades de los labios", tags: "queilitis labios" },
+  { code: "K13.1", label: "Mordedura del carrillo y del labio", tags: "" },
+  { code: "K13.2", label: "Leucoplasia y otras alteraciones del epitelio bucal", tags: "mancha blanca mucosa" },
+  { code: "K13.7", label: "Otras lesiones de la mucosa bucal, no especificadas", tags: "lesion mucosa" },
+
+  { code: "K14.0", label: "Glositis", tags: "lengua inflamada" },
+  { code: "K14.1", label: "Lengua geográfica", tags: "" },
+  { code: "K14.3", label: "Hipertrofia de las papilas linguales", tags: "" },
+  { code: "K14.5", label: "Lengua fisurada", tags: "lengua con grietas" },
+  { code: "K14.6", label: "Glosodinia", tags: "dolor de lengua ardor" },
+  { code: "K14.9", label: "Enfermedad de la lengua, no especificada", tags: "" },
+];
+
+function cie10Normalize(s) {
+  return String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-function bullets(text) {
-  return String(text || "")
-    .split(/[;\n]+/)
-    .map(x => x.trim())
+function cie10Search(query) {
+  const q = cie10Normalize(query).trim();
+  if (!q) return [];
+  return CIE10
+    .map(item => {
+      const haystack = cie10Normalize(`${item.code} ${item.label} ${item.tags}`);
+      const idx = haystack.indexOf(q);
+      if (idx === -1) return null;
+      const score = idx === 0 ? 0 : (haystack[idx - 1] === " " ? 1 : 2);
+      return { item, score };
+    })
     .filter(Boolean)
-    .map(x => `<li>${esc(x)}</li>`)
-    .join("");
+    .sort((a, b) => a.score - b.score)
+    .slice(0, 8)
+    .map(r => r.item);
 }
-
-/* ============================================================
-   BÚSQUEDA POR DNI — Supabase (mismo proyecto que Dr. Estrada AI)
-   ------------------------------------------------------------
-   ⚠️ AJUSTAR ANTES DE USAR:
-   1) Pega tu SUPABASE_ANON_KEY (la clave pública "anon", nunca
-      la "service_role"). La sacas en Supabase → Project Settings → API.
-   2) Confirma el nombre de la tabla y de las columnas en
-      DNI_TABLE / DNI_COLUMNS si tu tabla "pacientes" usa otros nombres.
-============================================================ */
-const SUPABASE_URL = "https://qvsnedvkyonobjenouwk.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_FI4SCFUUwi8BbcvyXopKhQ_Di3WXlVB";
-
-const DNI_TABLE = "pacientes";
-const DNI_COLUMNS = { dni: "dni", nombre: "nombre", edad: "edad", sexo: "sexo" };
-
-let supabaseClient = null;
-if (SUPABASE_ANON_KEY && SUPABASE_ANON_KEY !== "PEGA_AQUI_TU_ANON_KEY" && window.supabase) {
-  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-}
-
-function setDniStatus(msg, type) {
-  const el = $("dniStatus");
-  el.textContent = msg;
-  el.className = "dni-status" + (type ? " " + type : "");
-}
-
-async function buscarPorDni() {
-  const dni = $("dni").value.trim();
-  if (!dni) { setDniStatus("Ingresa un DNI para buscar.", "err"); return; }
-  if (!/^\d{8}$/.test(dni)) { setDniStatus("El DNI debe tener 8 dígitos.", "err"); return; }
-
-  if (!supabaseClient) {
-    setDniStatus("Supabase no está configurado aún (falta la anon key en app.js).", "err");
-    return;
-  }
-
-  setDniStatus("Buscando...", "loading");
-  try {
-    const { data, error } = await supabaseClient
-      .from(DNI_TABLE)
-      .select("*")
-      .eq(DNI_COLUMNS.dni, dni)
-      .maybeSingle();
-
-    if (error) { setDniStatus("Error al buscar: " + error.message, "err"); return; }
-
-    if (!data) {
-      setDniStatus("No se encontró un paciente con ese DNI. Puedes ingresar los datos manualmente.", "err");
-      return;
-    }
-
-    if (data[DNI_COLUMNS.nombre]) $("patient").value = data[DNI_COLUMNS.nombre];
-    if (data[DNI_COLUMNS.edad]) $("age").value = data[DNI_COLUMNS.edad];
-    if (data[DNI_COLUMNS.sexo]) $("sex").value = data[DNI_COLUMNS.sexo];
-
-    setDniStatus("✓ Paciente encontrado y datos cargados.", "ok");
-  } catch (e) {
-    setDniStatus("No se pudo conectar a Supabase: " + e.message, "err");
-  }
-}
-
-$("buscarDniBtn").addEventListener("click", buscarPorDni);
-$("dni").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); buscarPorDni(); } });
-
-/* ============================================================
-   AUTOCOMPLETADO CIE-10 (K00-K14)
-   Usa el catálogo y buscador definidos en cie10.js
-============================================================ */
-const cie10Input = $("cie10Search");
-const cie10Box = $("cie10Results");
-let cie10Active = 0;
-let cie10Current = [];
-
-function renderCie10(results) {
-  cie10Current = results;
-  cie10Active = 0;
-  if (!results.length) {
-    cie10Box.innerHTML = `<div class="cie10-empty">Sin coincidencias en K00–K14. Puedes escribir el diagnóstico libremente abajo.</div>`;
-    cie10Box.style.display = "block";
-    return;
-  }
-  cie10Box.innerHTML = results.map((item, i) => `
-    <div class="cie10-item${i === 0 ? " active" : ""}" data-idx="${i}">
-      <span class="cie10-code">${esc(item.code)}</span>
-      <span>${esc(item.label)}</span>
-    </div>
-  `).join("");
-  cie10Box.style.display = "block";
-}
-
-function pickCie10(item) {
-  const current = $("diagnosis").value.trim();
-  const line = `${item.code} – ${item.label}`;
-  $("diagnosis").value = current ? `${current}; ${line}` : line;
-  cie10Input.value = "";
-  cie10Box.style.display = "none";
-}
-
-cie10Input.addEventListener("input", () => {
-  const results = cie10Search(cie10Input.value);
-  if (cie10Input.value.trim() === "") { cie10Box.style.display = "none"; return; }
-  renderCie10(results);
-});
-
-cie10Box.addEventListener("click", e => {
-  const row = e.target.closest(".cie10-item");
-  if (!row) return;
-  const idx = Number(row.dataset.idx);
-  if (cie10Current[idx]) pickCie10(cie10Current[idx]);
-});
-
-cie10Input.addEventListener("keydown", e => {
-  if (!cie10Current.length || cie10Box.style.display === "none") return;
-  if (e.key === "ArrowDown") {
-    e.preventDefault();
-    cie10Active = Math.min(cie10Active + 1, cie10Current.length - 1);
-    [...cie10Box.children].forEach((el, i) => el.classList.toggle("active", i === cie10Active));
-  }
-  if (e.key === "ArrowUp") {
-    e.preventDefault();
-    cie10Active = Math.max(cie10Active - 1, 0);
-    [...cie10Box.children].forEach((el, i) => el.classList.toggle("active", i === cie10Active));
-  }
-  if (e.key === "Enter") {
-    e.preventDefault();
-    pickCie10(cie10Current[cie10Active]);
-  }
-});
-
-document.addEventListener("click", e => {
-  if (!e.target.closest(".cie10-field")) cie10Box.style.display = "none";
-});
-
-/* ============================================================
-   GENERACIÓN DEL PLAN (lógica original, sin cambios)
-============================================================ */
-$("generateBtn").addEventListener("click", () => {
-  const patient = $("patient").value || "Paciente";
-  const age = $("age").value || "No especificada";
-  const sex = $("sex").value || "No especificado";
-  const date = $("date").value || new Date().toLocaleDateString("es-PE");
-  const reason = $("reason").value || "No registrado";
-  const history = $("history").value || "No registrado";
-  const findings = $("findings").value || "No registrados";
-  const diagnosis = $("diagnosis").value || "Pendiente de validación";
-  const teeth = $("teeth").value || "No especificadas";
-  const procedures = $("procedures").value || "Pendientes de definir";
-  const priority = $("priority").value;
-  const notes = $("notes").value || "Sin observaciones";
-
-  $("result").innerHTML = `
-    <div class="plan-title">PLAN DE TRATAMIENTO ODONTOLÓGICO</div>
-    <p><strong>Paciente:</strong> ${esc(patient)} &nbsp; | &nbsp;
-       <strong>Edad:</strong> ${esc(age)} &nbsp; | &nbsp;
-       <strong>Sexo:</strong> ${esc(sex)} &nbsp; | &nbsp;
-       <strong>Fecha:</strong> ${esc(date)}</p>
-
-    <div class="plan-section">
-      <h3>1. Motivo de consulta</h3>
-      <p>${esc(reason)}</p>
-    </div>
-
-    <div class="plan-section">
-      <h3>2. Antecedentes / consideraciones</h3>
-      <p>${esc(history)}</p>
-    </div>
-
-    <div class="plan-section">
-      <h3>3. Hallazgos clínicos</h3>
-      <p>${esc(findings)}</p>
-    </div>
-
-    <div class="plan-section">
-      <h3>4. Diagnóstico</h3>
-      <p>${esc(diagnosis)}</p>
-    </div>
-
-    <div class="plan-section">
-      <h3>5. Piezas involucradas</h3>
-      <p>${esc(teeth)}</p>
-    </div>
-
-    <div class="plan-section">
-      <h3>6. Objetivos del tratamiento</h3>
-      <ul>
-        <li>Controlar los problemas odontológicos identificados.</li>
-        <li>Restablecer salud, función y/o estética según corresponda.</li>
-        <li>Prevenir progresión de enfermedad y establecer mantenimiento.</li>
-      </ul>
-    </div>
-
-    <div class="plan-section">
-      <h3>7. Plan por fases</h3>
-      <ol>
-        <li><strong>Fase inicial:</strong> atención de urgencias y control de factores de riesgo, según indicación clínica.</li>
-        <li><strong>Fase terapéutica:</strong> ejecutar los procedimientos validados por el odontólogo.</li>
-        <li><strong>Fase de mantenimiento:</strong> controles y prevención individualizada.</li>
-      </ol>
-    </div>
-
-    <div class="plan-section">
-      <h3>8. Procedimientos propuestos</h3>
-      <ul>${bullets(procedures)}</ul>
-    </div>
-
-    <div class="plan-section">
-      <h3>9. Prioridad</h3>
-      <p><strong>${esc(priority)}</strong></p>
-    </div>
-
-    <div class="plan-section">
-      <h3>10. Observaciones</h3>
-      <p>${esc(notes)}</p>
-    </div>
-
-    <hr>
-    <p><strong>Nota:</strong> El presente documento es un apoyo de organización y redacción.
-    El diagnóstico definitivo, pronóstico, indicaciones, secuencia y ejecución del tratamiento
-    corresponden al profesional odontólogo responsable.</p>
-  `;
-});
-
-$("printBtn").addEventListener("click", () => window.print());
-
-$("copyBtn").addEventListener("click", async () => {
-  const text = $("result").innerText;
-  try {
-    await navigator.clipboard.writeText(text);
-    $("copyBtn").textContent = "✓ Copiado";
-    setTimeout(() => $("copyBtn").textContent = "Copiar texto", 1500);
-  } catch {
-    alert("No se pudo copiar automáticamente. Selecciona y copia el texto.");
-  }
-});
