@@ -17,6 +17,142 @@ function bullets(text) {
     .join("");
 }
 
+/* ============================================================
+   BÚSQUEDA POR DNI — Supabase (mismo proyecto que Dr. Estrada AI)
+   ------------------------------------------------------------
+   ⚠️ AJUSTAR ANTES DE USAR:
+   1) Pega tu SUPABASE_ANON_KEY (la clave pública "anon", nunca
+      la "service_role"). La sacas en Supabase → Project Settings → API.
+   2) Confirma el nombre de la tabla y de las columnas en
+      DNI_TABLE / DNI_COLUMNS si tu tabla "pacientes" usa otros nombres.
+============================================================ */
+const SUPABASE_URL = "https://qvsnedvkyonobjenouwk.supabase.co";
+const SUPABASE_ANON_KEY = "PEGA_AQUI_TU_ANON_KEY";
+
+const DNI_TABLE = "pacientes";
+const DNI_COLUMNS = { dni: "dni", nombre: "nombre", edad: "edad", sexo: "sexo" };
+
+let supabaseClient = null;
+if (SUPABASE_ANON_KEY && SUPABASE_ANON_KEY !== "PEGA_AQUI_TU_ANON_KEY" && window.supabase) {
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
+function setDniStatus(msg, type) {
+  const el = $("dniStatus");
+  el.textContent = msg;
+  el.className = "dni-status" + (type ? " " + type : "");
+}
+
+async function buscarPorDni() {
+  const dni = $("dni").value.trim();
+  if (!dni) { setDniStatus("Ingresa un DNI para buscar.", "err"); return; }
+  if (!/^\d{8}$/.test(dni)) { setDniStatus("El DNI debe tener 8 dígitos.", "err"); return; }
+
+  if (!supabaseClient) {
+    setDniStatus("Supabase no está configurado aún (falta la anon key en app.js).", "err");
+    return;
+  }
+
+  setDniStatus("Buscando...", "loading");
+  try {
+    const { data, error } = await supabaseClient
+      .from(DNI_TABLE)
+      .select("*")
+      .eq(DNI_COLUMNS.dni, dni)
+      .maybeSingle();
+
+    if (error) { setDniStatus("Error al buscar: " + error.message, "err"); return; }
+
+    if (!data) {
+      setDniStatus("No se encontró un paciente con ese DNI. Puedes ingresar los datos manualmente.", "err");
+      return;
+    }
+
+    if (data[DNI_COLUMNS.nombre]) $("patient").value = data[DNI_COLUMNS.nombre];
+    if (data[DNI_COLUMNS.edad]) $("age").value = data[DNI_COLUMNS.edad];
+    if (data[DNI_COLUMNS.sexo]) $("sex").value = data[DNI_COLUMNS.sexo];
+
+    setDniStatus("✓ Paciente encontrado y datos cargados.", "ok");
+  } catch (e) {
+    setDniStatus("No se pudo conectar a Supabase: " + e.message, "err");
+  }
+}
+
+$("buscarDniBtn").addEventListener("click", buscarPorDni);
+$("dni").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); buscarPorDni(); } });
+
+/* ============================================================
+   AUTOCOMPLETADO CIE-10 (K00-K14)
+   Usa el catálogo y buscador definidos en cie10.js
+============================================================ */
+const cie10Input = $("cie10Search");
+const cie10Box = $("cie10Results");
+let cie10Active = 0;
+let cie10Current = [];
+
+function renderCie10(results) {
+  cie10Current = results;
+  cie10Active = 0;
+  if (!results.length) {
+    cie10Box.innerHTML = `<div class="cie10-empty">Sin coincidencias en K00–K14. Puedes escribir el diagnóstico libremente abajo.</div>`;
+    cie10Box.style.display = "block";
+    return;
+  }
+  cie10Box.innerHTML = results.map((item, i) => `
+    <div class="cie10-item${i === 0 ? " active" : ""}" data-idx="${i}">
+      <span class="cie10-code">${esc(item.code)}</span>
+      <span>${esc(item.label)}</span>
+    </div>
+  `).join("");
+  cie10Box.style.display = "block";
+}
+
+function pickCie10(item) {
+  const current = $("diagnosis").value.trim();
+  const line = `${item.code} – ${item.label}`;
+  $("diagnosis").value = current ? `${current}; ${line}` : line;
+  cie10Input.value = "";
+  cie10Box.style.display = "none";
+}
+
+cie10Input.addEventListener("input", () => {
+  const results = cie10Search(cie10Input.value);
+  if (cie10Input.value.trim() === "") { cie10Box.style.display = "none"; return; }
+  renderCie10(results);
+});
+
+cie10Box.addEventListener("click", e => {
+  const row = e.target.closest(".cie10-item");
+  if (!row) return;
+  const idx = Number(row.dataset.idx);
+  if (cie10Current[idx]) pickCie10(cie10Current[idx]);
+});
+
+cie10Input.addEventListener("keydown", e => {
+  if (!cie10Current.length || cie10Box.style.display === "none") return;
+  if (e.key === "ArrowDown") {
+    e.preventDefault();
+    cie10Active = Math.min(cie10Active + 1, cie10Current.length - 1);
+    [...cie10Box.children].forEach((el, i) => el.classList.toggle("active", i === cie10Active));
+  }
+  if (e.key === "ArrowUp") {
+    e.preventDefault();
+    cie10Active = Math.max(cie10Active - 1, 0);
+    [...cie10Box.children].forEach((el, i) => el.classList.toggle("active", i === cie10Active));
+  }
+  if (e.key === "Enter") {
+    e.preventDefault();
+    pickCie10(cie10Current[cie10Active]);
+  }
+});
+
+document.addEventListener("click", e => {
+  if (!e.target.closest(".cie10-field")) cie10Box.style.display = "none";
+});
+
+/* ============================================================
+   GENERACIÓN DEL PLAN (lógica original, sin cambios)
+============================================================ */
 $("generateBtn").addEventListener("click", () => {
   const patient = $("patient").value || "Paciente";
   const age = $("age").value || "No especificada";
