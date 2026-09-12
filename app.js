@@ -155,6 +155,72 @@ $("dni").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDe
 $("guardarPacienteBtn").addEventListener("click", guardarPaciente);
 
 /* ============================================================
+   GUARDAR / CARGAR EL PLAN COMPLETO (por DNI + odontólogo)
+============================================================ */
+function collectFormData() {
+  return {
+    patient: $("patient").value, age: $("age").value, sex: $("sex").value, phone: $("phone").value,
+    date: $("date").value, reason: $("reason").value, history: $("history").value,
+    findings: $("findings").value, diagnosis: $("diagnosis").value, teeth: $("teeth").value,
+    procedures: $("procedures").value, priority: $("priority").value, notes: $("notes").value,
+    odontograma: odontogramaState,
+  };
+}
+
+function fillFormData(d) {
+  $("patient").value = d.patient || ""; $("age").value = d.age || ""; $("sex").value = d.sex || "";
+  $("phone").value = d.phone || ""; if (d.date) $("date").value = d.date;
+  $("reason").value = d.reason || ""; $("history").value = d.history || "";
+  $("findings").value = d.findings || ""; $("diagnosis").value = d.diagnosis || "";
+  $("teeth").value = d.teeth || ""; $("procedures").value = d.procedures || "";
+  if (d.priority) $("priority").value = d.priority; $("notes").value = d.notes || "";
+
+  Object.keys(odontogramaState).forEach(k => delete odontogramaState[k]);
+  Object.assign(odontogramaState, d.odontograma || {});
+  odontoRender();
+}
+
+async function guardarPlanCompleto() {
+  const dni = $("dni").value.trim();
+  const st = $("guardarPlanStatus");
+  if (!/^\d{8}$/.test(dni)) { st.textContent = "Ingresa el DNI del paciente (8 dígitos) antes de guardar el plan."; st.className = "dni-status err"; return; }
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (!session) { st.textContent = "Debes iniciar sesión."; st.className = "dni-status err"; return; }
+
+  st.textContent = "Guardando plan..."; st.className = "dni-status loading";
+  const { error } = await supabaseClient.from("planes_tratamiento").insert({
+    odontologo_id: session.user.id, dni, data: collectFormData(),
+  });
+  if (error) { st.textContent = "Error al guardar: " + error.message; st.className = "dni-status err"; return; }
+  st.textContent = "✓ Plan guardado. Puedes cerrar la app tranquilo, ya quedó registrado."; st.className = "dni-status ok";
+}
+
+async function cargarUltimoPlan() {
+  const dni = $("dni").value.trim();
+  const st = $("guardarStatus");
+  if (!/^\d{8}$/.test(dni)) { st.textContent = "Ingresa el DNI (8 dígitos) para buscar su último plan."; st.className = "dni-status err"; return; }
+
+  st.textContent = "Buscando plan guardado..."; st.className = "dni-status loading";
+  const { data, error } = await supabaseClient
+    .from("planes_tratamiento")
+    .select("data, created_at")
+    .eq("dni", dni)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) { st.textContent = "Error: " + error.message; st.className = "dni-status err"; return; }
+  if (!data) { st.textContent = "Este DNI no tiene ningún plan guardado todavía."; st.className = "dni-status err"; return; }
+
+  fillFormData(data.data);
+  st.textContent = "✓ Plan cargado (guardado el " + new Date(data.created_at).toLocaleDateString("es-PE") + ").";
+  st.className = "dni-status ok";
+}
+
+$("guardarPlanBtn").addEventListener("click", guardarPlanCompleto);
+$("cargarPlanBtn").addEventListener("click", cargarUltimoPlan);
+
+/* ============================================================
    AUTOCOMPLETADO CIE-10 (K00-K14)
    Usa el catálogo y buscador definidos en cie10.js
 ============================================================ */
