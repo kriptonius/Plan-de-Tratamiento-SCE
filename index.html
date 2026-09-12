@@ -44,7 +44,10 @@
 
   <main class="container">
     <section class="card">
-      <h2>1. Datos del paciente</h2>
+      <div class="result-head">
+        <h2>1. Datos del paciente</h2>
+        <button id="nuevoPacienteBtn" class="secondary">🆕 Nuevo paciente</button>
+      </div>
 
       <div class="dni-row">
         <div>
@@ -149,6 +152,15 @@
       <button id="generateBtn" class="primary">✨ Generar plan</button>
       <button id="guardarPlanBtn" class="secondary" style="margin-top:8px;width:100%;">💾 Guardar plan completo de este paciente</button>
       <div id="guardarPlanStatus" class="dni-status"></div>
+    </section>
+
+    <section class="card">
+      <h2>Presupuesto</h2>
+      <div id="presupuestoRows"></div>
+      <button id="addItemBtn" class="secondary" style="margin-top:6px;">+ Agregar ítem</button>
+      <div class="presupuesto-total">Total: S/ <span id="presupuestoTotal">0.00</span></div>
+      <button id="enviarWhatsappBtn" class="secondary" style="margin-top:10px;width:100%;">📲 Enviar presupuesto por WhatsApp</button>
+      <div id="whatsappStatus" class="dni-status"></div>
     </section>
 
     <section class="card result-card">

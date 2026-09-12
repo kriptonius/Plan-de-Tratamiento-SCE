@@ -163,7 +163,7 @@ function collectFormData() {
     date: $("date").value, reason: $("reason").value, history: $("history").value,
     findings: $("findings").value, diagnosis: $("diagnosis").value, teeth: $("teeth").value,
     procedures: $("procedures").value, priority: $("priority").value, notes: $("notes").value,
-    odontograma: odontogramaState,
+    odontograma: odontogramaState, presupuesto: presupuestoItems,
   };
 }
 
@@ -178,6 +178,10 @@ function fillFormData(d) {
   Object.keys(odontogramaState).forEach(k => delete odontogramaState[k]);
   Object.assign(odontogramaState, d.odontograma || {});
   odontoRender();
+
+  presupuestoItems.length = 0;
+  (d.presupuesto || []).forEach(it => presupuestoItems.push(it));
+  renderPresupuesto();
 }
 
 async function guardarPlanCompleto() {
@@ -219,6 +223,87 @@ async function cargarUltimoPlan() {
 
 $("guardarPlanBtn").addEventListener("click", guardarPlanCompleto);
 $("cargarPlanBtn").addEventListener("click", cargarUltimoPlan);
+
+/* ============================================================
+   NUEVO PACIENTE — limpia todo el formulario
+============================================================ */
+$("nuevoPacienteBtn").addEventListener("click", () => {
+  if (!confirm("¿Empezar con un paciente nuevo? Si no guardaste el plan actual, se perderá.")) return;
+  ["dni","patient","age","phone","reason","history","findings","diagnosis","teeth","procedures","notes"]
+    .forEach(id => $(id).value = "");
+  $("sex").value = ""; $("priority").value = "Electivo";
+  $("date").value = new Date().toISOString().slice(0, 10);
+  Object.keys(odontogramaState).forEach(k => delete odontogramaState[k]);
+  selectedTooth = null;
+  odontoRender();
+  presupuestoItems.length = 0;
+  renderPresupuesto();
+  $("result").innerHTML = `<p class="muted">Completa los datos y pulsa "Generar plan".</p>`;
+  ["dniStatus","guardarStatus","guardarPlanStatus","whatsappStatus"].forEach(id => { $(id).textContent = ""; });
+  $("dni").focus();
+});
+
+/* ============================================================
+   PRESUPUESTO — ítems, total y envío por WhatsApp
+============================================================ */
+const presupuestoItems = [];
+
+function renderPresupuesto() {
+  const wrap = $("presupuestoRows");
+  wrap.innerHTML = presupuestoItems.map((item, i) => `
+    <div class="presupuesto-row">
+      <input type="text" placeholder="Ej. Restauración pieza 16" value="${item.desc.replace(/"/g,'&quot;')}" data-i="${i}" data-f="desc">
+      <input type="number" min="0" step="0.5" placeholder="0.00" value="${item.price || ""}" data-i="${i}" data-f="price">
+      <button type="button" data-del="${i}">✕</button>
+    </div>
+  `).join("") || `<p class="muted" style="font-size:13px;">Sin ítems todavía — agrega uno.</p>`;
+
+  wrap.querySelectorAll("input").forEach(inp => {
+    inp.addEventListener("input", () => {
+      const i = Number(inp.dataset.i), f = inp.dataset.f;
+      presupuestoItems[i][f] = f === "price" ? Number(inp.value) || 0 : inp.value;
+      updatePresupuestoTotal();
+    });
+  });
+  wrap.querySelectorAll("[data-del]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      presupuestoItems.splice(Number(btn.dataset.del), 1);
+      renderPresupuesto();
+    });
+  });
+  updatePresupuestoTotal();
+}
+
+function updatePresupuestoTotal() {
+  const total = presupuestoItems.reduce((s, it) => s + (Number(it.price) || 0), 0);
+  $("presupuestoTotal").textContent = total.toFixed(2);
+}
+
+$("addItemBtn").addEventListener("click", () => {
+  presupuestoItems.push({ desc: "", price: 0 });
+  renderPresupuesto();
+});
+
+$("enviarWhatsappBtn").addEventListener("click", () => {
+  const st = $("whatsappStatus");
+  const phoneRaw = $("phone").value.trim().replace(/\D/g, "");
+  if (!phoneRaw) { st.textContent = "Ingresa el teléfono del paciente arriba primero."; st.className = "dni-status err"; return; }
+  const items = presupuestoItems.filter(it => it.desc.trim());
+  if (!items.length) { st.textContent = "Agrega al menos un ítem al presupuesto."; st.className = "dni-status err"; return; }
+
+  const phone = phoneRaw.length === 9 ? "51" + phoneRaw : phoneRaw;
+  const total = items.reduce((s, it) => s + (Number(it.price) || 0), 0);
+  const nombre = $("patient").value || "Paciente";
+
+  let msg = `Hola ${nombre}, este es tu presupuesto de tratamiento odontológico:\n\n`;
+  items.forEach(it => { msg += `• ${it.desc}: S/ ${Number(it.price).toFixed(2)}\n`; });
+  msg += `\n*Total estimado: S/ ${total.toFixed(2)}*\n\nCualquier consulta, escríbeme por este medio.`;
+
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank");
+  st.textContent = "✓ Abriendo WhatsApp..."; st.className = "dni-status ok";
+});
+
+renderPresupuesto();
 
 /* ============================================================
    AUTOCOMPLETADO CIE-10 (K00-K14)
@@ -381,6 +466,14 @@ $("generateBtn").addEventListener("click", () => {
     <p><strong>Nota:</strong> El presente documento es un apoyo de organización y redacción.
     El diagnóstico definitivo, pronóstico, indicaciones, secuencia y ejecución del tratamiento
     corresponden al profesional odontólogo responsable.</p>
+
+    ${presupuestoItems.filter(it => it.desc.trim()).length ? `
+      <div class="plan-section">
+        <h3>Presupuesto estimado</h3>
+        <ul>${presupuestoItems.filter(it => it.desc.trim()).map(it => `<li>${esc(it.desc)}: S/ ${Number(it.price).toFixed(2)}</li>`).join("")}</ul>
+        <p><strong>Total: S/ ${presupuestoItems.reduce((s, it) => s + (Number(it.price) || 0), 0).toFixed(2)}</strong></p>
+      </div>
+    ` : ""}
   `;
 });
 

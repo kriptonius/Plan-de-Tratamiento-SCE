@@ -184,6 +184,22 @@ button {
   padding: 26px 22px;
 }
 
+/* --- Presupuesto --- */
+.presupuesto-row {
+  display: flex; gap: 8px; align-items: center; margin-bottom: 8px;
+}
+.presupuesto-row input[type="text"] { flex: 1; margin-top: 0; }
+.presupuesto-row input[type="number"] { width: 90px; margin-top: 0; }
+.presupuesto-row button {
+  background: none; border: 1px solid var(--border); color: var(--muted);
+  border-radius: 8px; padding: 8px 10px; flex-shrink: 0;
+}
+.presupuesto-total {
+  text-align: right; font-family: 'IBM Plex Mono', monospace;
+  font-size: 16px; font-weight: 700; color: var(--coral);
+  margin-top: 10px;
+}
+
 @media (max-width: 650px) {
   .topbar { align-items: flex-start; flex-direction: column; }
   .grid { grid-template-columns: 1fr; gap: 0; }
