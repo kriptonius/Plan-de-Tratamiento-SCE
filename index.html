@@ -38,9 +38,27 @@
     </div>
     <div style="display:flex;gap:8px;">
       <button id="printBtn" class="secondary">🖨️ Imprimir / PDF</button>
+      <button id="cuentaBtn" class="secondary">⚙️ Mi cuenta</button>
       <button id="logoutBtn" class="secondary">Salir</button>
     </div>
   </header>
+
+  <section class="card" id="cuentaPanel" style="display:none;">
+    <h2>Mi cuenta</h2>
+    <p id="cuentaEstado" class="muted"></p>
+    <div id="cuentaProForm" style="display:none;">
+      <label>Nombre de tu consultorio (aparece en el membrete)
+        <input id="nombreConsultorio" placeholder="Ej. Clínica Dental Sonrisa Feliz">
+      </label>
+      <button id="guardarConsultorioBtn" class="secondary">Guardar nombre</button>
+    </div>
+    <div id="cuentaFreeInfo" style="display:none;">
+      <p class="muted" style="font-size:13px;">
+        Con PRO puedes enviar el presupuesto directo por WhatsApp y poner el nombre de tu propio consultorio en el membrete.<br><br>
+        <strong>PRO: S/15/mes.</strong> Yapea o Plinea al 948213679 y escríbeme para activarlo.
+      </p>
+    </div>
+  </section>
 
   <main class="container">
     <section class="card">
@@ -156,6 +174,7 @@
 
     <section class="card">
       <h2>Presupuesto</h2>
+      <button id="sincronizarPresupuestoBtn" class="secondary" style="width:100%;margin-bottom:10px;">⬇️ Cargar ítems desde el odontograma y procedimientos</button>
       <div id="presupuestoRows"></div>
       <button id="addItemBtn" class="secondary" style="margin-top:6px;">+ Agregar ítem</button>
       <div class="presupuesto-total">Total: S/ <span id="presupuestoTotal">0.00</span></div>

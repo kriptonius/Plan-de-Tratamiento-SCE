@@ -52,8 +52,41 @@ function showAuth() {
 async function checkSession() {
   if (!supabaseClient) { setAuthStatus("Supabase no está configurado en app.js.", true); return; }
   const { data: { session } } = await supabaseClient.auth.getSession();
-  if (session) showApp(); else showAuth();
+  if (session) { showApp(); await cargarPerfil(session.user.id); } else showAuth();
 }
+
+let perfilActual = { es_pro: false, nombre_consultorio: null };
+
+async function cargarPerfil(userId) {
+  let { data } = await supabaseClient.from("perfiles").select("*").eq("id", userId).maybeSingle();
+  if (!data) {
+    const { data: nuevo } = await supabaseClient.from("perfiles").insert({ id: userId }).select().maybeSingle();
+    data = nuevo;
+  }
+  perfilActual = data || { es_pro: false, nombre_consultorio: null };
+  renderCuenta();
+}
+
+function renderCuenta() {
+  $("cuentaEstado").innerHTML = perfilActual.es_pro
+    ? `Estado: <strong style="color:#4ADE80;">PRO ✓</strong>`
+    : `Estado: <strong>Gratis</strong>`;
+  $("cuentaProForm").style.display = perfilActual.es_pro ? "block" : "none";
+  $("cuentaFreeInfo").style.display = perfilActual.es_pro ? "none" : "block";
+  if (perfilActual.nombre_consultorio) $("nombreConsultorio").value = perfilActual.nombre_consultorio;
+}
+
+$("cuentaBtn").addEventListener("click", () => {
+  const p = $("cuentaPanel");
+  p.style.display = p.style.display === "none" ? "block" : "none";
+});
+
+$("guardarConsultorioBtn")?.addEventListener("click", async () => {
+  const nombre = $("nombreConsultorio").value.trim();
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  await supabaseClient.from("perfiles").update({ nombre_consultorio: nombre }).eq("id", session.user.id);
+  perfilActual.nombre_consultorio = nombre;
+});
 
 $("authLoginBtn")?.addEventListener("click", async () => {
   if (!supabaseClient) return setAuthStatus("Supabase no configurado.", true);
@@ -284,8 +317,27 @@ $("addItemBtn").addEventListener("click", () => {
   renderPresupuesto();
 });
 
+function sincronizarPresupuestoDesdePlan() {
+  Object.entries(odontogramaState).forEach(([tooth, condKey]) => {
+    const c = CONDITIONS[condKey];
+    if (!c) return;
+    const desc = `Pieza ${tooth} — ${c.label}`;
+    if (!presupuestoItems.some(it => it.desc === desc)) presupuestoItems.push({ desc, price: 0 });
+  });
+  $("procedures").value.split(/[;\n]+/).map(s => s.trim()).filter(Boolean).forEach(line => {
+    if (!presupuestoItems.some(it => it.desc === line)) presupuestoItems.push({ desc: line, price: 0 });
+  });
+  renderPresupuesto();
+}
+$("sincronizarPresupuestoBtn").addEventListener("click", sincronizarPresupuestoDesdePlan);
+
 $("enviarWhatsappBtn").addEventListener("click", () => {
   const st = $("whatsappStatus");
+  if (!perfilActual.es_pro) {
+    st.innerHTML = `🔒 Enviar por WhatsApp es una función <strong>PRO</strong>. Yapea/Plinea S/15 al 948213679 y escríbeme para activarla.`;
+    st.className = "dni-status err";
+    return;
+  }
   const phoneRaw = $("phone").value.trim().replace(/\D/g, "");
   if (!phoneRaw) { st.textContent = "Ingresa el teléfono del paciente arriba primero."; st.className = "dni-status err"; return; }
   const items = presupuestoItems.filter(it => it.desc.trim());
@@ -295,7 +347,9 @@ $("enviarWhatsappBtn").addEventListener("click", () => {
   const total = items.reduce((s, it) => s + (Number(it.price) || 0), 0);
   const nombre = $("patient").value || "Paciente";
 
-  let msg = `Hola ${nombre}, este es tu presupuesto de tratamiento odontológico:\n\n`;
+  const nombreClinica = perfilActual.nombre_consultorio || "CIRUJANOS DENTISTAS ASOCIADOS";
+  let msg = `*${nombreClinica.toUpperCase()}*\n\n`;
+  msg += `Hola ${nombre}, este es tu presupuesto de tratamiento odontológico:\n\n`;
   items.forEach(it => { msg += `• ${it.desc}: S/ ${Number(it.price).toFixed(2)}\n`; });
   msg += `\n*Total estimado: S/ ${total.toFixed(2)}*\n\nCualquier consulta, escríbeme por este medio.`;
 
@@ -393,6 +447,10 @@ $("generateBtn").addEventListener("click", () => {
   const notes = $("notes").value || "Sin observaciones";
 
   $("result").innerHTML = `
+    <div class="letterhead">
+      <div class="letterhead-name">${esc((perfilActual.es_pro && perfilActual.nombre_consultorio) ? perfilActual.nombre_consultorio.toUpperCase() : "CIRUJANOS DENTISTAS ASOCIADOS")}</div>
+      <div class="letterhead-sede">${(perfilActual.es_pro && perfilActual.nombre_consultorio) ? "" : "Sede VRAEM"}</div>
+    </div>
     <div class="plan-title">PLAN DE TRATAMIENTO ODONTOLÓGICO</div>
     <p><strong>Paciente:</strong> ${esc(patient)} &nbsp; | &nbsp;
        <strong>Edad:</strong> ${esc(age)} &nbsp; | &nbsp;
@@ -470,8 +528,13 @@ $("generateBtn").addEventListener("click", () => {
     ${presupuestoItems.filter(it => it.desc.trim()).length ? `
       <div class="plan-section">
         <h3>Presupuesto estimado</h3>
-        <ul>${presupuestoItems.filter(it => it.desc.trim()).map(it => `<li>${esc(it.desc)}: S/ ${Number(it.price).toFixed(2)}</li>`).join("")}</ul>
-        <p><strong>Total: S/ ${presupuestoItems.reduce((s, it) => s + (Number(it.price) || 0), 0).toFixed(2)}</strong></p>
+        <table class="presupuesto-table">
+          <thead><tr><th>Concepto</th><th>Precio (S/)</th></tr></thead>
+          <tbody>
+            ${presupuestoItems.filter(it => it.desc.trim()).map(it => `<tr><td>${esc(it.desc)}</td><td>${Number(it.price).toFixed(2)}</td></tr>`).join("")}
+          </tbody>
+          <tfoot><tr><td>Total</td><td>S/ ${presupuestoItems.reduce((s, it) => s + (Number(it.price) || 0), 0).toFixed(2)}</td></tr></tfoot>
+        </table>
       </div>
     ` : ""}
   `;

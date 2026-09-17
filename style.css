@@ -200,6 +200,32 @@ button {
   margin-top: 10px;
 }
 
+/* --- Membrete y tabla de presupuesto --- */
+.letterhead {
+  text-align: center;
+  border-bottom: 2px solid var(--coral);
+  padding-bottom: 12px;
+  margin-bottom: 18px;
+}
+.letterhead-name {
+  font-weight: 700; font-size: 15px; letter-spacing: 0.5px;
+}
+.letterhead-sede {
+  font-size: 12px; color: var(--muted); font-family: 'IBM Plex Mono', monospace;
+  margin-top: 2px;
+}
+.presupuesto-table {
+  width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px;
+}
+.presupuesto-table th, .presupuesto-table td {
+  border: 1px solid var(--border); padding: 8px 10px; text-align: left;
+}
+.presupuesto-table th:last-child, .presupuesto-table td:last-child { text-align: right; }
+.presupuesto-table thead th { background: var(--panel-alt); }
+.presupuesto-table tfoot td {
+  font-weight: 700; color: var(--coral); border-top: 2px solid var(--coral);
+}
+
 @media (max-width: 650px) {
   .topbar { align-items: flex-start; flex-direction: column; }
   .grid { grid-template-columns: 1fr; gap: 0; }
@@ -215,4 +241,7 @@ button {
   .card { border: 0; box-shadow: none; background: #ffffff; }
   .plan-title { color: #172033; }
   input, select, textarea { color: #172033; }
+  .letterhead-sede { color: #5A6270; }
+  .presupuesto-table th, .presupuesto-table td { border-color: #d5dae2; }
+  .presupuesto-table thead th { background: #f2f4f7; }
 }
