@@ -171,7 +171,7 @@ async function guardarPaciente() {
     sexo: $("sex").value || null,
     telefono: $("phone").value || null,
     odontologo_id: session.user.id,
-  }, { onConflict: "dni" });
+  }, { onConflict: "dni,odontologo_id" });
 
   if (error) { st.textContent = "Error al guardar: " + error.message; st.className = "dni-status err"; return; }
   st.textContent = "✓ Paciente guardado en tu lista."; st.className = "dni-status ok";
