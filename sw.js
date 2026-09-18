@@ -1,4 +1,4 @@
-const CACHE = "plantratamiento-v1";
+const CACHE = "plantratamiento-v2";
 const SHELL = [
   "./",
   "./index.html",
@@ -23,16 +23,19 @@ self.addEventListener("activate", e => {
   self.clients.claim();
 });
 
+// Red primero: siempre intenta traer la versión más nueva.
+// Si no hay internet, recién ahí usa lo guardado en caché (modo offline).
 self.addEventListener("fetch", e => {
   const req = e.request;
-  // No interceptar llamadas a Supabase ni otros orígenes (login, DNI, etc.)
   if (req.method !== "GET" || new URL(req.url).origin !== self.location.origin) return;
 
   e.respondWith(
-    caches.match(req).then(cached => cached || fetch(req).then(res => {
-      const copy = res.clone();
-      caches.open(CACHE).then(c => c.put(req, copy));
-      return res;
-    }).catch(() => cached))
+    fetch(req)
+      .then(res => {
+        const copy = res.clone();
+        caches.open(CACHE).then(c => c.put(req, copy));
+        return res;
+      })
+      .catch(() => caches.match(req))
   );
 });
