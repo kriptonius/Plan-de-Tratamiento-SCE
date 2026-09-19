@@ -63,13 +63,19 @@ async function cargarPerfil(userId) {
     const { data: nuevo } = await supabaseClient.from("perfiles").insert({ id: userId }).select().maybeSingle();
     data = nuevo;
   }
-  perfilActual = data || { es_pro: false, nombre_consultorio: null };
+  perfilActual = data || { es_pro: false, nombre_consultorio: null, pro_hasta: null };
+
+  if (perfilActual.es_pro && perfilActual.pro_hasta && new Date(perfilActual.pro_hasta) <= new Date()) {
+    perfilActual.es_pro = false;
+    await supabaseClient.from("perfiles").update({ es_pro: false }).eq("id", userId);
+  }
   renderCuenta();
 }
 
 function renderCuenta() {
+  const vence = perfilActual.pro_hasta ? new Date(perfilActual.pro_hasta).toLocaleDateString("es-PE") : null;
   $("cuentaEstado").innerHTML = perfilActual.es_pro
-    ? `Estado: <strong style="color:#4ADE80;">PRO ✓</strong>`
+    ? `Estado: <strong style="color:#4ADE80;">PRO ✓</strong>${vence ? ` — vence el ${vence}` : ""}`
     : `Estado: <strong>Gratis</strong>`;
   $("cuentaProForm").style.display = perfilActual.es_pro ? "block" : "none";
   $("cuentaFreeInfo").style.display = perfilActual.es_pro ? "none" : "block";
@@ -334,7 +340,7 @@ $("sincronizarPresupuestoBtn").addEventListener("click", sincronizarPresupuestoD
 $("enviarWhatsappBtn").addEventListener("click", () => {
   const st = $("whatsappStatus");
   if (!perfilActual.es_pro) {
-    st.innerHTML = `🔒 Enviar por WhatsApp es una función <strong>PRO</strong>. Yapea/Plinea S/15 al 948213679 y escríbeme para activarla.`;
+    st.innerHTML = `🔒 Enviar por WhatsApp es una función <strong>PRO</strong>. Ve a "⚙️ Mi cuenta" para ver el QR de pago y escríbeme para activarla.`;
     st.className = "dni-status err";
     return;
   }
