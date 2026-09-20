@@ -9,6 +9,7 @@ const SHELL = [
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png",
+  "./qr-pago.png",
 ];
 
 self.addEventListener("install", e => {
