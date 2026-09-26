@@ -86,7 +86,7 @@
           <input id="patient" placeholder="Ej. Paciente 001">
         </label>
         <label>Edad
-          <input id="age" type="number" min="0" max="120" placeholder="35">
+          <input id="age" type="text" inputmode="numeric" placeholder="Ej. 35 o 8 años">
         </label>
         <label>Teléfono / WhatsApp
           <input id="phone" type="tel" inputmode="numeric" placeholder="Ej. 987654321">
@@ -133,6 +133,13 @@
         <div class="odonto-row" id="odontoUpper"></div>
         <div class="odonto-midline"></div>
         <div class="odonto-row" id="odontoLower"></div>
+
+        <button type="button" id="toggleDeciduaBtn" class="secondary" style="margin-top:12px;width:100%;">🧒 Mostrar dentición temporal / mixta (niños)</button>
+        <div id="odontoDeciduaWrap" style="display:none;margin-top:10px;">
+          <div class="odonto-row" id="odontoUpperDecidua"></div>
+          <div class="odonto-midline"></div>
+          <div class="odonto-row" id="odontoLowerDecidua"></div>
+        </div>
         <div id="odontoHint" class="odonto-hint">Toca una pieza dentaria para marcar su condición.</div>
         <div class="odonto-palette" id="odontoPalette"></div>
         <div class="odonto-legend">
