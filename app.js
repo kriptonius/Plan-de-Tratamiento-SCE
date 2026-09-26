@@ -173,7 +173,7 @@ async function guardarPaciente() {
   const { error } = await supabaseClient.from(DNI_TABLE).upsert({
     dni,
     nombre: $("patient").value || null,
-    edad: $("age").value ? Number($("age").value) : null,
+    edad: $("age").value ? parseInt($("age").value, 10) || null : null,
     sexo: $("sex").value || null,
     telefono: $("phone").value || null,
     odontologo_id: session.user.id,
